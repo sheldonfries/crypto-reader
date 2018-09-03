@@ -1,9 +1,14 @@
 import React, { Component } from 'react';
+import ReactDOM from 'react-dom';
 
 import Boostrap from "/node_modules/bootstrap/dist/css/bootstrap.css";
 import { HTTP } from 'meteor/http';
 import Tabular from 'meteor/aldeed:tabular';
 import { addColours, transpose } from "./Helpers";
+import { withTracker } from 'meteor/react-meteor-data';
+
+import { Coins } from '../api/coins.js';
+import Coin from './Coin.js';
 
 var coins = [];
 var coinResult = [];
@@ -11,7 +16,7 @@ var coinResult = [];
 var LIMIT = 100;
 
 // App component - represents the whole app
-export default class App extends Component {
+class App extends Component {
   
   constructor(props) {
   	super(props);
@@ -22,8 +27,22 @@ export default class App extends Component {
   		cap: [],
   		price: [],
   		change24: [],
-  		change7: []
+  		change7: [],
+  		totalUSDValue: 0,
+  		totalSatValue: 0,
+  		usdChange: 0.0,
+  		satChange: 0.0
   	};
+  }
+  
+  handleSubmit(event) {
+    event.preventDefault();
+    const text = ReactDOM.findDOMNode(this.refs.textInput).value.trim();
+    Coins.insert({
+      text,
+      createdAt: new Date(),
+    });
+    ReactDOM.findDOMNode(this.refs.textInput).value = '';
   }
   
   componentDidMount() {
@@ -38,8 +57,24 @@ export default class App extends Component {
 		  	$(".navbar-logo").css("height", "100px");
 		  }
   	});
+  	
+  	$('.market-btn').click(function() {
+  		$(this).addClass("btn-primary").removeClass("btn-light");
+  		$('.portfolio-btn').addClass("btn-light").removeClass("btn-primary");
+  		$('.markets').css("display", "inline-table");
+  		$('.portfolio').css("display", "none");
+  	});
+  	
+  	$('.portfolio-btn').click(function() {
+  		$(this).addClass("btn-primary").removeClass("btn-light");
+  		$('.market-btn').addClass("btn-light").removeClass("btn-primary");
+  		$('.portfolio').css("display", "block");
+  		$('.markets').css("display", "none");
+  	});
+  	
   	this.coinHandler();
   	setTimeout(addColours, 500);
+  	this.getPortfolioValue();
   }
   
   coinHandler() {
@@ -99,6 +134,24 @@ export default class App extends Component {
   							});
 		return coinList;
 	}
+	
+	renderPortfolio() {
+		var portfolioCoinMap = this.props.coins.map((coin) => (
+			<Coin key={coin._id} coin={coin} />
+			));
+		return portfolioCoinMap;
+	}
+	
+	// TODO: Get value of coins after they have loaded.
+	getPortfolioValue() {
+		var tempUSDValue, tempSatValue, tempUSDChange, tempSatChange;
+		console.log(this.props.coins);
+		for(var i = 0; i < this.props.coins.length; i++) {
+			tempUSDValue += (this.props.coins[i].price * this.props.coins[i].amount);
+		}
+		this.setState({totalUSDValue: tempUSDValue});
+		$('.dollars').text("$" + this.state.totalUSDValue);
+	}
 
   render() {
     return (
@@ -118,7 +171,7 @@ export default class App extends Component {
 					</div>
 				</nav>
 				
-	      <table className="table" id="table">
+	      <table className="table markets" id="table">
 	      	<thead>
 			    	<tr className="table-header">
 			    		<th>#</th>
@@ -133,7 +186,40 @@ export default class App extends Component {
 	        	{this.renderCoins()}
 	        </tbody>
 	      </table>
+	      
+	      <div className="portfolio">
+			    <ul>
+			    	{this.renderPortfolio()}
+			    </ul>
+		      <form className="new-task" onSubmit={this.handleSubmit.bind(this)} >
+          	<input type="text" ref="textInput" placeholder="Type to add new coins"/>
+          </form>
+			   </div>
+	      
+	      <nav className="navbar bg-faded fixed-bottom button-holder">
+	      	<div className="container">
+	      		<ul className="nav mx-auto">
+			    		<button type="button" className="btn btn-primary market-btn">Market</button>
+			    		<button type="button" className="btn btn-light portfolio-btn">Portfolio</button>
+			    	</ul>
+			    </div>
+			  </nav>
       </div>
     );
   }
 }
+
+export default withTracker(() => {
+	var number_of_coins = Coins.find({}).fetch().length;
+	if(number_of_coins > 0) {
+		return {
+		  coins: Coins.find({}, { sort: { createdAt: -1 } }).fetch(),
+		};
+	}
+	else {
+		// TODO: Handle empty coin list
+		return {
+		  coins: Coins.find({}, { sort: { createdAt: -1 } }).fetch(),
+		};
+	}
+})(App);
