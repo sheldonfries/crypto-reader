@@ -75,13 +75,20 @@ li {
 	border-bottom: 1px solid lightgray;
 }
 
-.table {
+#table_wrapper {
 	margin-top: 100px;
+}
+
+#table_length, #table_info, #table_paginate {
+  display: none;
+}
+
+#table_filter {
+  padding-top: 10px;
 }
 
 .portfolio {
 	display: none;
-	margin-top: 100px;
 	text-align: center;
 	margin-bottom: 25px;
 }

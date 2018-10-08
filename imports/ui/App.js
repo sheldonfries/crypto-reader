@@ -201,16 +201,16 @@ class App extends Component {
 				
 	      <table className="table markets" id="table">
 	      	<thead>
-			    	<tr className="table-header">
-			    		<th>#</th>
-			    		<th>Name</th>
-			    		<th>Market Cap</th>
-			    		<th>Price</th>
-			    		<th>Change (24h)</th>
-			    		<th>Change (7d)</th>
-			    	</tr> 
-			    </thead>
-			    <tbody>
+				<tr className="table-header">
+					<th>#</th>
+					<th>Name</th>
+					<th>Market Cap</th>
+					<th>Price</th>
+					<th>Change (24h)</th>
+					<th>Change (7d)</th>
+				</tr> 
+			</thead>
+			<tbody>
 	        	{this.renderCoins()}
 	        </tbody>
 	      </table>
@@ -225,10 +225,10 @@ class App extends Component {
 					  		<th>Average Buy Price</th>
 					  		<th>Amount</th>
 					  	</tr> 
-					  </thead>
-					  <tbody>
-					  	{this.renderPortfolio()}
-					  </tbody>
+					</thead>
+					<tbody>
+					{this.renderPortfolio()}
+					</tbody>
 			    </table>
 					<form className="new-task" onSubmit={this.handleSubmit.bind(this)} >
 						<input type="number" ref="rankInput" placeholder="Rank"/>
