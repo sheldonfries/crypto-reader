@@ -3,7 +3,6 @@ import ReactDOM from 'react-dom';
 
 import Boostrap from "/node_modules/bootstrap/dist/css/bootstrap.css";
 import { HTTP } from 'meteor/http';
-import Tabular from 'meteor/aldeed:tabular';
 import { addColours, transpose } from "./Helpers";
 import { withTracker } from 'meteor/react-meteor-data';
 
@@ -13,19 +12,21 @@ import Coin from './Coin.js';
 var coins = [];
 var coinResult = [];
 
-var LIMIT = 100;
+const LIMIT = 100;
 
 // App component - represents the whole app
 class App extends Component {
   
   constructor(props) {
   	super(props);
+  	this.getPortfolioValue = this.getPortfolioValue.bind(this);
   	this.state = {
   		id: [],
   		num: [],
   		text: [],
   		cap: [],
   		price: [],
+  		regPrice: [],
   		change24: [],
   		change7: [],
   		totalUSDValue: 0,
@@ -37,12 +38,21 @@ class App extends Component {
   
   handleSubmit(event) {
     event.preventDefault();
-    const text = ReactDOM.findDOMNode(this.refs.textInput).value.trim();
+    const rank = ReactDOM.findDOMNode(this.refs.rankInput).value.trim();
+    const coinName = ReactDOM.findDOMNode(this.refs.coinInput).value.trim();
+    const price = ReactDOM.findDOMNode(this.refs.priceInput).value.trim();
+    const amount = ReactDOM.findDOMNode(this.refs.amtInput).value.trim();
     Coins.insert({
-      text,
+    	num: rank,
+      text: coinName,
+      price,
+      amount,
       createdAt: new Date(),
     });
-    ReactDOM.findDOMNode(this.refs.textInput).value = '';
+    ReactDOM.findDOMNode(this.refs.rankInput).value = '';
+    ReactDOM.findDOMNode(this.refs.coinInput).value = '';
+    ReactDOM.findDOMNode(this.refs.priceInput).value = '';
+    ReactDOM.findDOMNode(this.refs.amtInput).value = '';
   }
   
   componentDidMount() {
@@ -74,7 +84,7 @@ class App extends Component {
   	
   	this.coinHandler();
   	setTimeout(addColours, 500);
-  	this.getPortfolioValue();
+  	setTimeout(this.getPortfolioValue, 2000);
   }
   
   coinHandler() {
@@ -99,15 +109,17 @@ class App extends Component {
 					var tempStateText = this.state.text.slice();
 					var tempStateCap = this.state.cap.slice();
 					var tempStatePrice = this.state.price.slice();
+					var tempStateRegPrice = this.state.regPrice.slice();
 					var tempStateChange24 = this.state.change24.slice();
 					var tempStateChange7 = this.state.change7.slice();
 					tempStateNum[i] = coinData.rank;
 					tempStateText[i] = coinData.name;
 					tempStateCap[i] = currencyFormatterCap.format(coinData.quotes.USD.market_cap);
 					tempStatePrice[i] = currencyFormatter.format(coinData.quotes.USD.price);
+					tempStateRegPrice[i] = coinData.quotes.USD.price.toFixed(2);
 					tempStateChange24[i] = coinData.quotes.USD.percent_change_24h;
 					tempStateChange7[i] = coinData.quotes.USD.percent_change_7d;
-					this.setState({_id: i+1, num: tempStateNum, text: tempStateText, cap: tempStateCap, price: tempStatePrice, change24: tempStateChange24, change7: tempStateChange7});
+					this.setState({_id: i+1, num: tempStateNum, text: tempStateText, cap: tempStateCap, price: tempStatePrice, regPrice: tempStateRegPrice, change24: tempStateChange24, change7: tempStateChange7});
 				}
 			}
 		});
@@ -142,15 +154,31 @@ class App extends Component {
 		return portfolioCoinMap;
 	}
 	
-	// TODO: Get value of coins after they have loaded.
 	getPortfolioValue() {
-		var tempUSDValue, tempSatValue, tempUSDChange, tempSatChange;
-		console.log(this.props.coins);
+		var tempUSDValue = 0;
+		var tempSatValue = 0;
+		var tempUSDChange = 0.0;
+		var tempSatChange = 0.0;
+		var btc = $('.coin td:nth-child(4)').first().text();
+		btc = btc.replace('$', '');
+		btc = btc.replace(',', '');
+		var BTCValue = btc;
+		var currencyFormatter = new Intl.NumberFormat('en-US', {
+			style: 'currency',
+			currency: 'USD'
+		});
+		var coinNum;
 		for(var i = 0; i < this.props.coins.length; i++) {
-			tempUSDValue += (this.props.coins[i].price * this.props.coins[i].amount);
+		  if(this.props.coins[i].price > 0) {
+		  	coinNum = this.props.coins[i].num;
+				tempUSDValue += (this.state.regPrice[coinNum-1] * this.props.coins[i].amount);
+			}
 		}
-		this.setState({totalUSDValue: tempUSDValue});
-		$('.dollars').text("$" + this.state.totalUSDValue);
+		tempSatValue = Math.round((tempUSDValue / btc) * 100000000) / 100000000;
+		this.setState({totalUSDValue: currencyFormatter.format(tempUSDValue)});
+		this.setState({totalSatValue: tempSatValue});
+		$('.dollars').text(this.state.totalUSDValue);
+		$('.satoshis').text("Ƀ" + this.state.totalSatValue);
 	}
 
   render() {
@@ -188,12 +216,27 @@ class App extends Component {
 	      </table>
 	      
 	      <div className="portfolio">
-			    <ul>
-			    	{this.renderPortfolio()}
-			    </ul>
-		      <form className="new-task" onSubmit={this.handleSubmit.bind(this)} >
-          	<input type="text" ref="textInput" placeholder="Type to add new coins"/>
-          </form>
+			    <table className="table" id="table-portfolio">
+			    	<thead>
+					  	<tr className="table-header">
+					  		<th></th>
+					  		<th>#</th>
+					  		<th>Name</th>
+					  		<th>Average Buy Price</th>
+					  		<th>Amount</th>
+					  	</tr> 
+					  </thead>
+					  <tbody>
+					  	{this.renderPortfolio()}
+					  </tbody>
+			    </table>
+					<form className="new-task" onSubmit={this.handleSubmit.bind(this)} >
+						<input type="number" ref="rankInput" placeholder="Rank"/>
+						<input type="text" ref="coinInput" placeholder="Coin name"/>
+						<input type="number" ref="priceInput" placeholder="Price"/>
+						<input type="number" ref="amtInput" placeholder="Amount"/>
+						<input type="submit" ref="submitBtn" value="Add Coin"/>
+					</form>
 			   </div>
 	      
 	      <nav className="navbar bg-faded fixed-bottom button-holder">

@@ -3,7 +3,13 @@ import React, { Component } from 'react';
 export default class Coin extends Component {
   render() {
     return (
-      <li>#{this.props.coin.num} - {this.props.coin.text} - ${this.props.coin.price} - Amount:  {this.props.coin.amount}</li>
+    	<tr>
+    		<td><button className="delete btn">&times;</button></td>
+		    <td>{this.props.coin.num}</td>
+		    <td>{this.props.coin.text}</td>
+		    <td>${this.props.coin.price}</td>
+		    <td>{this.props.coin.amount}</td>
+		  </tr>
     );
   }
 }
