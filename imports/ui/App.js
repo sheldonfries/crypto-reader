@@ -93,14 +93,18 @@ class App extends Component {
   		$(this).addClass("btn-primary").removeClass("btn-light");
   		$('.portfolio-btn').addClass("btn-light").removeClass("btn-primary");
   		$('.markets').css("display", "block");
-  		$('.portfolio').css("display", "none");
+		$('.portfolio').css("display", "none");
+		$('.prev-btn').css("display", "block");
+		$('.next-btn').css("display", "block");
   	});
   	
   	$('.portfolio-btn').click(function() {
   		$(this).addClass("btn-primary").removeClass("btn-light");
   		$('.market-btn').addClass("btn-light").removeClass("btn-primary");
   		$('.portfolio').css("display", "block");
-  		$('.markets').css("display", "none");
+		$('.markets').css("display", "none");
+		$('.prev-btn').css("display", "none");
+		$('.next-btn').css("display", "none");
 	  });
 	  
 	$('.prev-btn').click(function() {

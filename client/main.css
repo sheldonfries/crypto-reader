@@ -117,6 +117,10 @@ header .hide-completed {
 	padding: 0 1rem !important;
 }
 
+.delete {
+  padding: 0.1rem 0.5rem !important;
+}
+
 .navbar-logo {
 	height: 100px;
 	width: 100px;

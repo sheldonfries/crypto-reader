@@ -21,7 +21,7 @@ export default class Coin extends Component {
 	render() {
     return (
     	<tr>
-    		<td><button className="delete btn" onClick={this.deleteCoin.bind(this)}>&times;</button></td>
+    		<td><button className="delete btn btn-danger" onClick={this.deleteCoin.bind(this)}>&times;</button></td>
 		    <td>{this.props.coin.text}</td>
 		    <td>${this.props.coin.price}</td>
 		    <td>{this.props.coin.amount}</td>
