@@ -18,6 +18,7 @@ var coins = [];
 var coinResult = [];
 
 const LIMIT = 100;
+var start = 1;
 
 // App component - represents the whole app
 class App extends Component {
@@ -71,14 +72,19 @@ class App extends Component {
   }
   
   componentDidMount() {
+	var component = this;
   	$(window).scroll(function() {
   		var scroll = $(window).scrollTop();    
 		  if (scroll > 50) {
-		    $(".navbar").addClass("scrolled");
+			$(".navbar").addClass("scrolled");
+			$(".dollar-percent").css("display", "none");
+			$(".satoshi-percent").css("display", "none");
 		    $(".navbar-logo").css("height", "50px");
 		  }
 		  else {
-		  	$(".navbar").removeClass("scrolled");
+			$(".navbar").removeClass("scrolled");
+			$(".dollar-percent").css("display", "block");
+			$(".satoshi-percent").css("display", "block");
 		  	$(".navbar-logo").css("height", "100px");
 		  }
   	});
@@ -95,7 +101,23 @@ class App extends Component {
   		$('.market-btn').addClass("btn-light").removeClass("btn-primary");
   		$('.portfolio').css("display", "block");
   		$('.markets').css("display", "none");
-  	});
+	  });
+	  
+	$('.prev-btn').click(function() {
+		if(start > 100) {
+			start -= 100;
+			component.coinHandler();
+			setTimeout(addColours, 500);
+		}
+	});
+
+	$('.next-btn').click(function() {
+		if(start < 2000) {
+			start += 100;
+			component.coinHandler();
+			setTimeout(addColours, 500);
+		}
+	});
   	
   	this.coinHandler();
   	setTimeout(addColours, 500);
@@ -115,7 +137,7 @@ class App extends Component {
 			maximumFractionDigits: 0
 		});
 		HTTP.get(url, {
-			params: { "limit" : LIMIT, "sort": "rank", "structure": "array" }
+			params: { "limit" : LIMIT, "sort": "rank", "start": start, "structure": "array" }
 		}, (error, result) => {
 			if(!error) {
 				for(var i = 0; i < LIMIT; i++) {
@@ -209,12 +231,12 @@ class App extends Component {
 					<div className="container">
 						<ul className="nav navbar-nav pull-sm-left">
 							<li className="nav-item nav-link dollars">$0.00</li>
-							<li className="nav-item nav-link satoshis">Ƀ0.00000000</li>
+							<li className="nav-item nav-link dollar-percent">+0%</li>
 						</ul>
 						<ul className="nav navbar-nav navbar-logo mx-auto">
 						</ul>
 						<ul className="nav navbar-nav pull-sm-right">
-							<li className="nav-item nav-link dollar-percent">+0%</li>
+							<li className="nav-item nav-link satoshis">Ƀ0.00000000</li>
 							<li className="nav-item nav-link satoshi-percent">+0%</li>
 						</ul>
 					</div>
@@ -262,9 +284,15 @@ class App extends Component {
 	      
 	      <nav className="navbar bg-faded fixed-bottom button-holder">
 	      	<div className="container">
+			  	<ul className="nav mx-auto">
+				  <button type="button" className="btn btn-light prev-btn">Prev</button>
+				</ul>
 	      		<ul className="nav mx-auto">
 					<button type="button" className="btn btn-primary market-btn">Market</button>
 					<button type="button" className="btn btn-light portfolio-btn">Portfolio</button>
+				</ul>
+				<ul className="nav mx-auto">
+				  <button type="button" className="btn btn-light next-btn">Next</button>
 				</ul>
 			</div>
 		  </nav>

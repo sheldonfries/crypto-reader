@@ -101,6 +101,10 @@ li {
 	border-bottom: #eee solid 1px;
 }
 
+.dollars, .satoshis {
+  font-weight: bold;
+}
+
 li .text {
   margin-left: 10px;
 }
