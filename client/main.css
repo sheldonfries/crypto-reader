@@ -75,15 +75,19 @@ li {
 	border-bottom: 1px solid lightgray;
 }
 
-#table_wrapper {
+.markets, .portfolio {
+  margin-top: 101px;
+}
+
+#table-markets_wrapper, #table-portfolio_wrapper {
 	margin-top: 100px;
 }
 
-#table_length, #table_info, #table_paginate {
+#table-markets_length, #table-markets_info, #table-markets_paginate, #table-portfolio_length, #table-portfolio_info, #table-portfolio_paginate {
   display: none;
 }
 
-#table_filter {
+#table-markets_filter, #table-portfolio_filter {
   padding-top: 10px;
 }
 
@@ -131,6 +135,10 @@ header .hide-completed {
 
 .button-holder > .container > .nav > button {
 	margin: 5px;
+}
+
+.modal {
+  display: none;
 }
 
 @media (max-width: 600px) {

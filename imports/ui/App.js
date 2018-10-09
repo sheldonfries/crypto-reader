@@ -1,13 +1,18 @@
 import React, { Component } from 'react';
 import ReactDOM from 'react-dom';
 
-import Boostrap from "/node_modules/bootstrap/dist/css/bootstrap.css";
+import Bootstrap from "/node_modules/bootstrap/dist/css/bootstrap.css";
 import { HTTP } from 'meteor/http';
 import { addColours, transpose } from "./Helpers";
 import { withTracker } from 'meteor/react-meteor-data';
 
 import { Coins } from '../api/coins.js';
 import Coin from './Coin.js';
+
+import { $ } from 'meteor/jquery';
+import dataTablesBootstrap from 'datatables.net-bs';
+import 'datatables.net-bs/css/dataTables.bootstrap.css';
+dataTablesBootstrap(window, $);
 
 var coins = [];
 var coinResult = [];
@@ -28,31 +33,41 @@ class App extends Component {
   		price: [],
   		regPrice: [],
   		change24: [],
-  		change7: [],
+		change7: [],
+		symbol: [],  
   		totalUSDValue: 0,
   		totalSatValue: 0,
   		usdChange: 0.0,
-  		satChange: 0.0
+  		satChange: 0.0,
   	};
   }
   
   handleSubmit(event) {
     event.preventDefault();
-    const rank = ReactDOM.findDOMNode(this.refs.rankInput).value.trim();
     const coinName = ReactDOM.findDOMNode(this.refs.coinInput).value.trim();
     const price = ReactDOM.findDOMNode(this.refs.priceInput).value.trim();
-    const amount = ReactDOM.findDOMNode(this.refs.amtInput).value.trim();
-    Coins.insert({
-    	num: rank,
-      text: coinName,
-      price,
-      amount,
-      createdAt: new Date(),
+	const amount = ReactDOM.findDOMNode(this.refs.amtInput).value.trim();
+	/*
+	var duplicate = false;
+	for(var i = 0; i < Coins.length; i++) {
+		if(coinName === Coins[i].text) {
+			Coins.update(Coins[i], {
+				$set:{price: }
+			})
+		}
+	}
+	*/
+	Coins.insert({
+      	text: coinName,
+      	price,
+		amount,
+		times: 1,
+      	createdAt: new Date(),
     });
-    ReactDOM.findDOMNode(this.refs.rankInput).value = '';
     ReactDOM.findDOMNode(this.refs.coinInput).value = '';
     ReactDOM.findDOMNode(this.refs.priceInput).value = '';
-    ReactDOM.findDOMNode(this.refs.amtInput).value = '';
+	ReactDOM.findDOMNode(this.refs.amtInput).value = '';
+	document.location.reload(true);
   }
   
   componentDidMount() {
@@ -71,7 +86,7 @@ class App extends Component {
   	$('.market-btn').click(function() {
   		$(this).addClass("btn-primary").removeClass("btn-light");
   		$('.portfolio-btn').addClass("btn-light").removeClass("btn-primary");
-  		$('.markets').css("display", "inline-table");
+  		$('.markets').css("display", "block");
   		$('.portfolio').css("display", "none");
   	});
   	
@@ -112,6 +127,7 @@ class App extends Component {
 					var tempStateRegPrice = this.state.regPrice.slice();
 					var tempStateChange24 = this.state.change24.slice();
 					var tempStateChange7 = this.state.change7.slice();
+					var tempStateSymbol = this.state.symbol.slice();
 					tempStateNum[i] = coinData.rank;
 					tempStateText[i] = coinData.name;
 					tempStateCap[i] = currencyFormatterCap.format(coinData.quotes.USD.market_cap);
@@ -119,7 +135,8 @@ class App extends Component {
 					tempStateRegPrice[i] = coinData.quotes.USD.price.toFixed(2);
 					tempStateChange24[i] = coinData.quotes.USD.percent_change_24h;
 					tempStateChange7[i] = coinData.quotes.USD.percent_change_7d;
-					this.setState({_id: i+1, num: tempStateNum, text: tempStateText, cap: tempStateCap, price: tempStatePrice, regPrice: tempStateRegPrice, change24: tempStateChange24, change7: tempStateChange7});
+					tempStateSymbol[i] = coinData.symbol;
+					this.setState({_id: i+1, num: tempStateNum, text: tempStateText, cap: tempStateCap, price: tempStatePrice, regPrice: tempStateRegPrice, change24: tempStateChange24, change7: tempStateChange7, symbol: tempStateSymbol});
 				}
 			}
 		});
@@ -162,16 +179,20 @@ class App extends Component {
 		var btc = $('.coin td:nth-child(4)').first().text();
 		btc = btc.replace('$', '');
 		btc = btc.replace(',', '');
-		var BTCValue = btc;
 		var currencyFormatter = new Intl.NumberFormat('en-US', {
 			style: 'currency',
 			currency: 'USD'
 		});
-		var coinNum;
+		var symbol, price;
 		for(var i = 0; i < this.props.coins.length; i++) {
-		  if(this.props.coins[i].price > 0) {
-		  	coinNum = this.props.coins[i].num;
-				tempUSDValue += (this.state.regPrice[coinNum-1] * this.props.coins[i].amount);
+		  	if(this.props.coins[i].price > 0) {
+				  symbol = this.props.coins[i].text;
+				  for(var j = 0; j < this.state.symbol.length; j++) {
+					  if(this.state.symbol[j] === symbol) {
+						price = this.state.regPrice[j];
+					  }
+				  }
+				tempUSDValue += (price * this.props.coins[i].amount);
 			}
 		}
 		tempSatValue = Math.round((tempUSDValue / btc) * 100000000) / 100000000;
@@ -199,28 +220,29 @@ class App extends Component {
 					</div>
 				</nav>
 				
-	      <table className="table markets" id="table">
-	      	<thead>
-				<tr className="table-header">
-					<th>#</th>
-					<th>Name</th>
-					<th>Market Cap</th>
-					<th>Price</th>
-					<th>Change (24h)</th>
-					<th>Change (7d)</th>
-				</tr> 
-			</thead>
-			<tbody>
-	        	{this.renderCoins()}
-	        </tbody>
-	      </table>
-	      
+	      <div className="markets">
+			<table className="table" id="table-markets">
+				<thead>
+					<tr className="table-header">
+						<th>#</th>
+						<th>Name</th>
+						<th>Market Cap</th>
+						<th>Price</th>
+						<th>Change (24h)</th>
+						<th>Change (7d)</th>
+					</tr> 
+				</thead>
+				<tbody>
+					{this.renderCoins()}
+				</tbody>
+			</table>
+		  </div>
+
 	      <div className="portfolio">
 			    <table className="table" id="table-portfolio">
 			    	<thead>
 					  	<tr className="table-header">
 					  		<th></th>
-					  		<th>#</th>
 					  		<th>Name</th>
 					  		<th>Average Buy Price</th>
 					  		<th>Amount</th>
@@ -230,23 +252,41 @@ class App extends Component {
 					{this.renderPortfolio()}
 					</tbody>
 			    </table>
-					<form className="new-task" onSubmit={this.handleSubmit.bind(this)} >
-						<input type="number" ref="rankInput" placeholder="Rank"/>
-						<input type="text" ref="coinInput" placeholder="Coin name"/>
-						<input type="number" ref="priceInput" placeholder="Price"/>
-						<input type="number" ref="amtInput" placeholder="Amount"/>
-						<input type="submit" ref="submitBtn" value="Add Coin"/>
-					</form>
-			   </div>
+				<form className="new-task" onSubmit={this.handleSubmit.bind(this)} >
+					<input type="text" ref="coinInput" placeholder="Coin symbol"/>
+					<input type="number" ref="priceInput" step="0.01" min="0" placeholder="Price"/>
+					<input type="number" ref="amtInput" step="0.0000001" min="0" placeholder="Amount"/>
+					<input type="submit" ref="submitBtn" value="Add Coin"/>
+				</form>
+			</div>
 	      
 	      <nav className="navbar bg-faded fixed-bottom button-holder">
 	      	<div className="container">
 	      		<ul className="nav mx-auto">
-			    		<button type="button" className="btn btn-primary market-btn">Market</button>
-			    		<button type="button" className="btn btn-light portfolio-btn">Portfolio</button>
-			    	</ul>
-			    </div>
-			  </nav>
+					<button type="button" className="btn btn-primary market-btn">Market</button>
+					<button type="button" className="btn btn-light portfolio-btn">Portfolio</button>
+				</ul>
+			</div>
+		  </nav>
+		  <div className="modal" tabIndex="-1" role="dialog">
+			<div className="modal-dialog modal-dialog-centered" role="document">
+				<div className="modal-content">
+					<div className="modal-header">
+						<h5 className="modal-title">Warning</h5>
+						<button type="button" className="close" data-dismiss="modal" aria-label="Close">
+							<span aria-hidden="true">&times;</span>
+						</button>
+					</div>
+					<div className="modal-body">
+						<p>Are you sure you want to remove this coin from your portfolio?</p>
+					</div>
+					<div className="modal-footer">
+						<button type="button" className="btn btn-secondary" data-dismiss="modal">Back</button>
+						<button type="button" className="btn btn-danger">Remove coin</button>
+					</div>
+				</div>
+			</div>
+		  </div>
       </div>
     );
   }
